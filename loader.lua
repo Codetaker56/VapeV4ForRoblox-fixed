@@ -72,8 +72,7 @@ if not shared.VapeDeveloper then
 			makefolder('newvape/assets/new')
 		end
 		local pending = 0
-		for path in list:gmatch('[^
-]+') do
+		for path in list:gmatch('[^%c]+') do
 			local dest = 'newvape/'..path
 			if not isfile(dest) then
 				pending += 1
