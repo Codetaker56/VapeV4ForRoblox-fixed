@@ -63,6 +63,34 @@ if not shared.VapeDeveloper then
 
 	writefile('newvape/profiles/asset.txt', assetVer)
 	writefile('newvape/profiles/commit.txt', commit)
+
+	-- parallel asset prefetch (the GUI would otherwise fetch them one by one)
+	local base = 'https://raw.githubusercontent.com/Codetaker56/VapeV4ForRoblox-fixed/'..commit..'/'
+	local ok, list = pcall(game.HttpGet, game, base..'assets.txt', true)
+	if ok and type(list) == 'string' and list ~= '404: Not Found' then
+		if not isfolder('newvape/assets/new') then
+			makefolder('newvape/assets/new')
+		end
+		local pending = 0
+		for path in list:gmatch('[^
+]+') do
+			local dest = 'newvape/'..path
+			if not isfile(dest) then
+				pending += 1
+				task.spawn(function()
+					local suc, res = pcall(game.HttpGet, game, base..path, true)
+					if suc and type(res) == 'string' and res ~= '' and res ~= '404: Not Found' then
+						writefile(dest, res)
+					end
+					pending -= 1
+				end)
+			end
+		end
+		local started = os.clock()
+		while pending > 0 and os.clock() - started < 120 do
+			task.wait(0.1)
+		end
+	end
 end
 
 return loadstring(downloadFile('newvape/main.lua'), 'main')()
